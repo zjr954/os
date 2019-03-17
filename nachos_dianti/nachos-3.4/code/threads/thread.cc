@@ -41,7 +41,7 @@ Thread::Thread(char* threadName, int priority)
             this->tid = i;
             tid_f[i] = 1;
             tid_pointer[i] = this;
-            printf("create tid %d\n", i);
+            //printf("create tid %d\n", i);
             break;
         }
     if (i == 128){
@@ -81,7 +81,7 @@ Thread::Thread(char* threadName, int priority)
 Thread::~Thread()
 {
     tid_f[this->tid] = 0;
-    printf("tid %d be deleted\n",this->tid);
+    //printf("tid %d be deleted\n",this->tid);
 
     DEBUG('t', "Deleting thread \"%s\"\n", name);
 

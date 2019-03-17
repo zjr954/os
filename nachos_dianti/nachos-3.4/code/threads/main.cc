@@ -114,7 +114,7 @@ main(int argc, char **argv)
     }
 
     ThreadTest();
-    TS();
+    //TS();
  
 #endif
 

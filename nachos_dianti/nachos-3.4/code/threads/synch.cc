@@ -100,13 +100,71 @@ Semaphore::V()
 // Dummy functions -- so we can compile our later assignments 
 // Note -- without a correct implementation of Condition::Wait(), 
 // the test case in the network assignment won't work!
-Lock::Lock(char* debugName) {}
-Lock::~Lock() {}
-void Lock::Acquire() {}
-void Lock::Release() {}
+Lock::Lock(char* debugName) 
+{
+    lock = new Semaphore(debugName, 1);
+}
+Lock::~Lock() { delete lock; }
+void Lock::Acquire() { lock->P(); }
+void Lock::Release() 
+{
+    ASSERT(isHeldByCurrentThread());
+    lock->V(); 
+}
+bool Lock::isHeldByCurrentThread()
+{
+    return 1;
+}
 
-Condition::Condition(char* debugName) { }
-Condition::~Condition() { }
-void Condition::Wait(Lock* conditionLock) { ASSERT(FALSE); }
-void Condition::Signal(Lock* conditionLock) { }
-void Condition::Broadcast(Lock* conditionLock) { }
+
+
+
+Condition::Condition(char* debugName) 
+{
+    name = debugName;
+    queue = new List;
+}
+Condition::~Condition() 
+{
+    delete queue;
+}
+void Condition::Wait(Lock* conditionLock) 
+{
+ //ASSERT(FALSE); 
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
+    conditionLock->Release();
+    queue->Append((void *)currentThread);
+    currentThread->Sleep();
+    (void) interrupt->SetLevel(oldLevel);
+    conditionLock->Acquire();
+
+    //(void) interrupt->SetLevel(oldLevel);
+}
+void Condition::Signal(Lock* conditionLock) 
+{
+    ASSERT(conditionLock->isHeldByCurrentThread());
+    Thread* thread;
+    //IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
+    thread = (Thread *)queue->Remove();
+    if (thread != NULL)
+        scheduler->ReadyToRun(thread);
+
+    //(void) interrupt->SetLevel(oldLevel);
+}
+void Condition::Broadcast(Lock* conditionLock) 
+{
+    ASSERT(conditionLock->isHeldByCurrentThread());
+    Thread* thread;
+    //IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
+    while (1){
+        thread = (Thread *)queue->Remove();
+        if (thread != NULL)
+            scheduler->ReadyToRun(thread);
+        else break;
+    }
+
+    //(void) interrupt->SetLevel(oldLevel);
+}
